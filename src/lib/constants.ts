@@ -9,6 +9,14 @@ export const TYPE_COLORS: Record<string, string> = {
   dark: '#1e293b',
   fairy: '#f472b6',
   normal: '#9ca3af',
+  bug: '#84cc17',
+  fighting: '#dc2626',
+  flying: '#a78bfa',
+  ground: '#d97706',
+  rock: '#78716c',
+  steel: '#94a3b8',
+  poison: '#a855f7',
+  ghost: '#6366f1',
 };
 
 export const POKEMON_TYPES = [
@@ -22,6 +30,15 @@ export const POKEMON_TYPES = [
   'dragon',
   'dark',
   'fairy',
+  'normal',
+  'bug',
+  'fighting',
+  'flying',
+  'ground',
+  'rock',
+  'steel',
+  'poison',
+  'ghost',
 ] as const;
 
 export const API_BASE_URL = 'https://pokeapi.co/api/v2';

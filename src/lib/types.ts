@@ -22,4 +22,12 @@ export type PokemonType =
   | 'dragon'
   | 'dark'
   | 'fairy'
-  | 'normal';
+  | 'normal'
+  | 'bug'
+  | 'fighting'
+  | 'flying'
+  | 'ground'
+  | 'rock'
+  | 'steel'
+  | 'poison'
+  | 'ghost';
