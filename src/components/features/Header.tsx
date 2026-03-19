@@ -19,7 +19,7 @@ export function Header() {
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pokemon-red to-pokemon-yellow flex items-center justify-center">
             <Sparkles className="text-white" size={20} />
           </div>
-          <span className="text-xl font-bold text-white">Pokedex</span>
+          <span className="text-xl font-bold text-white text-shadow">Pokedex</span>
         </motion.div>
         <nav className="hidden md:flex items-center gap-8" aria-label="Main navigation">
           {NAV_ITEMS.map((item, i) => (
@@ -29,7 +29,7 @@ export function Header() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * i }}
-              className="text-white/70 hover:text-white transition-colors text-sm font-medium"
+              className="text-white/90 hover:text-white transition-colors text-sm font-medium text-shadow"
             >
               {item}
             </motion.a>

@@ -44,3 +44,7 @@ export const POKEMON_TYPES = [
 export const API_BASE_URL = 'https://pokeapi.co/api/v2';
 
 export const POKEMON_LIMIT = 151;
+
+export const BATCH_SIZE = 20; // Cantidad de Pokémon a cargar por batch
+
+export const INITIAL_LOAD = 151; // Pokémon a cargar inicialmente

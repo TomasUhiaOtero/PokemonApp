@@ -1,21 +1,26 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
 import { TYPE_COLORS } from '../../lib/constants';
 import type { Pokemon } from '../../lib/types';
+import { TypeIconSimple } from './TypeIcon';
+
+const DEFAULT_TYPE_COLOR = '#6b7280';
 
 interface PokemonCardProps {
   pokemon: Pokemon;
   index: number;
 }
 
-export function PokemonCard({ pokemon, index }: PokemonCardProps) {
-  const color = TYPE_COLORS[pokemon.types[0]] || '#6b7280';
+export const PokemonCard = memo(function PokemonCard({ pokemon, index }: PokemonCardProps) {
+  const primaryType = pokemon.types[0];
+  const color = TYPE_COLORS[primaryType] || DEFAULT_TYPE_COLOR;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       viewport={{ once: true }}
       whileHover={{ y: -8, scale: 1.02 }}
       className="glass rounded-3xl p-6 cursor-pointer group relative overflow-hidden"
@@ -53,15 +58,28 @@ export function PokemonCard({ pokemon, index }: PokemonCardProps) {
         <h3 className="text-lg font-semibold text-white text-center capitalize">
           {pokemon.name}
         </h3>
-        <div className="flex justify-center gap-2 mt-3">
-          <span
-            className="px-3 py-1 rounded-full text-xs font-medium text-white"
-            style={{ background: color }}
-          >
-            {pokemon.types[0]}
-          </span>
+        
+        <div className="flex justify-center gap-2 mt-3 flex-wrap">
+          {pokemon.types.map((type) => {
+            const typeColor = TYPE_COLORS[type] || DEFAULT_TYPE_COLOR;
+            return (
+              <span
+                key={type}
+                className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold text-white capitalize border border-white/20 gap-2"
+                style={{ 
+                  background: `linear-gradient(135deg, ${typeColor}, ${typeColor}dd)`,
+                  boxShadow: `0 2px 8px ${typeColor}50, inset 0 1px 0 rgba(255,255,255,0.25)`,
+                  minWidth: '80px',
+                  justifyContent: 'center',
+                }}
+              >
+                <TypeIconSimple type={type} size={14} />
+                <span>{type}</span>
+              </span>
+            );
+          })}
         </div>
       </div>
     </motion.div>
   );
-}
+});

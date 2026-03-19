@@ -12,10 +12,10 @@ export function CTA() {
       >
         <div className="absolute inset-0 bg-gradient-to-br from-pokemon-red/20 to-pokemon-yellow/20" />
         <div className="relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 text-shadow">
             Ready to Catch 'Em All?
           </h2>
-          <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
+          <p className="text-white/80 text-lg mb-10 max-w-xl mx-auto">
             Start your Pokemon journey today. Explore, discover, and build your ultimate team.
           </p>
           <motion.button

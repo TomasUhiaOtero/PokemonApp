@@ -33,10 +33,10 @@ export function Hero() {
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.6 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight"
+          className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight text-shadow"
         >
           Discover the{' '}
-          <span className="text-gradient">World</span>
+          <span className="text-gradient text-shadow-glow">World</span>
           <br />
           of Pokemon
         </motion.h1>
@@ -45,7 +45,7 @@ export function Hero() {
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10"
+          className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 text-shadow"
         >
           Explore the complete Pokedex with detailed stats, types, abilities, and more. 
           Your ultimate companion for every Pokemon journey.

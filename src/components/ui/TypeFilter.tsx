@@ -1,45 +1,58 @@
 import { motion } from 'framer-motion';
-import { POKEMON_TYPES } from '../../lib/constants';
+import { POKEMON_TYPES, TYPE_COLORS } from '../../lib/constants';
 import type { PokemonType } from '../../lib/types';
+import { TypeIconSimple } from './TypeIcon';
+import './TypeFilter.css';
 
 interface TypeFilterProps {
-  activeType: PokemonType;
-  onTypeChange: (type: PokemonType) => void;
+  activeTypes: PokemonType[];
+  onTypeToggle: (type: PokemonType) => void;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  all: '#6b7280',
-  fire: '#ef4444',
-  water: '#3b82f6',
-  grass: '#22c55e',
-  electric: '#eab308',
-  psychic: '#ec4899',
-  ice: '#06b6d4',
-  dragon: '#8b5cf6',
-  dark: '#1e293b',
-  fairy: '#f472b6',
-};
+export function TypeFilter({ activeTypes, onTypeToggle }: TypeFilterProps) {
+  const isAllSelected = activeTypes.length === 0;
 
-export function TypeFilter({ activeType, onTypeChange }: TypeFilterProps) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      {POKEMON_TYPES.map((type) => (
-        <motion.button
-          key={type}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onTypeChange(type)}
-          className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-            activeType === type ? 'text-white' : 'text-white/60 hover:text-white'
-          }`}
-          style={{ 
-            background: activeType === type ? TYPE_COLORS[type] : 'rgba(255,255,255,0.1)' 
-          }}
-          aria-pressed={activeType === type}
-        >
-          {type.charAt(0).toUpperCase() + type.slice(1)}
-        </motion.button>
-      ))}
+    <div 
+      className="flex flex-wrap items-center justify-center gap-2"
+      role="group"
+      aria-label="Filter by Pokemon type"
+    >
+      {POKEMON_TYPES.map((type) => {
+        const typeColor = TYPE_COLORS[type] || '#6b7280';
+        const isActive = type === 'all' ? isAllSelected : activeTypes.includes(type);
+
+        return (
+          <motion.button
+            key={type}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onTypeToggle(type)}
+            className={`
+              type-filter-btn px-4 py-2 rounded-full text-sm font-medium 
+              cursor-pointer flex items-center gap-2 relative
+              ${isActive ? 'active text-white' : 'text-white/70'}
+            `}
+            style={{ 
+              backgroundColor: isActive ? typeColor : 'rgba(255,255,255,0.08)',
+              borderColor: isActive ? typeColor : 'transparent',
+              boxShadow: isActive ? `0 4px 12px ${typeColor}40` : 'none',
+              ['--type-color' as string]: typeColor,
+            }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            role="checkbox"
+            aria-checked={isActive}
+            aria-label={`${type} type filter`}
+          >
+            <span className="relative z-10">
+              <TypeIconSimple type={type} size={16} />
+            </span>
+            <span className="capitalize relative z-10">
+              {type}
+            </span>
+          </motion.button>
+        );
+      })}
     </div>
   );
 }

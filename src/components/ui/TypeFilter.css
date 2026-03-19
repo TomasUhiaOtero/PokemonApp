@@ -1,0 +1,14 @@
+.type-filter-btn {
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.type-filter-btn:hover {
+  background-color: var(--type-color) !important;
+  border-color: var(--type-color);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--type-color) 40%, transparent);
+}
+
+.type-filter-btn.active {
+  border-color: var(--type-color);
+}
