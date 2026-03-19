@@ -1,7 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { usePokemonOptimized, usePokemonFilter, pokemonApi } from './hooks/usePokemon';
-import { Header, Hero, Features, PokemonGrid, CTA, Footer } from './components/features';
-import { CacheStatus } from './components/ui';
+import { Hero, Features, PokemonGrid, CTA, Footer } from './components/features';
+import { CacheStatus, FluidNavigation } from './components/ui';
 
 const AnimatedBackground = lazy(() => 
   import('./components/layout/AnimatedBackground').then(m => ({ default: m.AnimatedBackground }))
@@ -91,7 +91,7 @@ function App() {
       <Suspense fallback={null}>
         <AnimatedBackground />
       </Suspense>
-      <Header />
+      <FluidNavigation />
       <Hero />
       <Features />
       <PokemonGrid
