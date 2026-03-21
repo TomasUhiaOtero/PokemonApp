@@ -111,7 +111,8 @@ function App() {
         closeOnClickAway={true}
         items={[
           { label: 'Home', link: '#top', ariaLabel: 'Go to Home' },
-          { label: 'Pokemons', link: '#pokemons', ariaLabel: 'Go to Pokemons' },
+          { label: 'Features', link: '#features', ariaLabel: 'Go to Features' },
+          { label: 'Pokedex', link: '#pokemons', ariaLabel: 'Go to Pokedex' },
           { label: 'About', link: '#cta', ariaLabel: 'Go to About' },
         ]}
       />

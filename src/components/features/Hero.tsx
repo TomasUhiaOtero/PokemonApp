@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { Zap, ChevronDown } from 'lucide-react';
 import { useRef } from 'react';
 import { SplitText } from '../ui/SplitText';
+import { ShinyText } from '../ui/ShinyText';
 
 const POKEMON_GIFS = [
   {
@@ -51,10 +52,18 @@ export function Hero() {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8"
+          className="inline-flex items-center gap-2 px-4 py-2 mb-8"
         >
-          <Zap className="text-pokemon-yellow" size={16} />
-          <span className="text-sm text-white/80">Gotta Catch 'Em All</span>
+          <Zap className="text-pokemon-yellow" size={18} />
+          <ShinyText
+            text="Gotta Catch 'Em All"
+            speed={3}
+            color="#ffffff"
+            shineColor="#fbbf24"
+            spread={20}
+            direction="left"
+            className="text-base"
+          />
         </motion.div>
 
         <div className="mb-6">
