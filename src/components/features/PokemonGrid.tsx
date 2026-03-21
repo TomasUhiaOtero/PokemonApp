@@ -1,9 +1,11 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { PokemonCard, TypeFilter, SearchInput } from '../ui';
-import type { Pokemon, PokemonType } from '../../lib/types';
+import { PokemonDetailView } from '../ui/PokemonDetail';
+import type { Pokemon, PokemonType, PokemonDetail } from '../../lib/types';
 import { POKEMON_LIMIT } from '../../lib/constants';
+import { usePokemonDetail } from '../../hooks/usePokemonDetail';
 
 interface PokemonGridProps {
   pokemons: Pokemon[];
@@ -11,6 +13,12 @@ interface PokemonGridProps {
   searchQuery: string;
   onTypeToggle: (type: PokemonType) => void;
   onSearchChange: (query: string) => void;
+  // Favorites props
+  showFavoritesOnly?: boolean;
+  onFavoritesToggle?: () => void;
+  favoriteCount?: number;
+  isFavorite?: (id: number) => boolean;
+  onToggleFavorite?: (id: number) => void;
   // Infinite scroll props
   hasMore?: boolean;
   isLoadingMore?: boolean;
@@ -144,6 +152,11 @@ export function PokemonGrid({
   searchQuery,
   onTypeToggle,
   onSearchChange,
+  showFavoritesOnly = false,
+  onFavoritesToggle,
+  favoriteCount = 0,
+  isFavorite,
+  onToggleFavorite,
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
@@ -153,8 +166,17 @@ export function PokemonGrid({
   const [currentPage, setCurrentPage] = useState(1);
   const gridRef = useRef<HTMLDivElement>(null);
   const lastLoadPage = useRef<number>(0);
+  const scrollPositionRef = useRef<number>(0);
   
-  const totalPages = Math.ceil((totalCount || POKEMON_LIMIT) / ITEMS_PER_PAGE);
+  const { 
+    pokemonDetail, 
+    isLoading: isLoadingDetail, 
+    error: errorDetail, 
+    fetchPokemonDetail, 
+    clearDetail 
+  } = usePokemonDetail();
+  
+  const totalPages = Math.ceil(pokemons.length / ITEMS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const pagePokemons = pokemons.slice(startIndex, endIndex);
@@ -172,7 +194,7 @@ export function PokemonGrid({
   // Reset a página 1 cuando cambian los filtros
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTypes, searchQuery]);
+  }, [activeTypes, searchQuery, showFavoritesOnly]);
 
   // Navegación con teclado
   useEffect(() => {
@@ -193,7 +215,44 @@ export function PokemonGrid({
     setCurrentPage(page);
   };
 
+  const handleSelectPokemon = async (pokemon: Pokemon) => {
+    // Guardar la posición de scroll antes de abrir el modal
+    scrollPositionRef.current = window.scrollY;
+    // Bloquear scroll mientras el modal está abierto
+    document.body.style.overflow = 'hidden';
+    await fetchPokemonDetail(pokemon.id);
+  };
+
+  const handleCloseDetail = useCallback(() => {
+    clearDetail();
+    // Restaurar scroll después de cerrar el modal
+    requestAnimationFrame(() => {
+      document.body.style.overflow = '';
+      window.scrollTo({
+        top: scrollPositionRef.current,
+        behavior: 'instant'
+      });
+    });
+  }, [clearDetail]);
+
+  const handleBackToGrid = () => {
+    clearDetail();
+  };
+
   return (
+    <>
+      <AnimatePresence mode="wait">
+        {pokemonDetail && (
+          <PokemonDetailView
+            key="pokemon-detail"
+            pokemon={pokemonDetail}
+            onClose={handleCloseDetail}
+            onBack={handleBackToGrid}
+          />
+        )}
+      </AnimatePresence>
+
+      {!pokemonDetail && (
     <section id="pokemons" className="py-20 px-6 relative z-10">
       <div className="max-w-5xl mx-auto">
         <motion.div
@@ -220,7 +279,13 @@ export function PokemonGrid({
           className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10"
         >
           <SearchInput value={searchQuery} onChange={onSearchChange} />
-          <TypeFilter activeTypes={activeTypes} onTypeToggle={onTypeToggle} />
+          <TypeFilter 
+            activeTypes={activeTypes} 
+            onTypeToggle={onTypeToggle}
+            showFavoritesOnly={showFavoritesOnly}
+            onFavoritesToggle={onFavoritesToggle}
+            favoriteCount={favoriteCount}
+          />
         </motion.div>
 
         {/* Navegación estilo Pokédex */}
@@ -251,6 +316,9 @@ export function PokemonGrid({
                   key={pokemon.id}
                   pokemon={pokemon}
                   index={index}
+                  isFavorite={isFavorite ? isFavorite(pokemon.id) : false}
+                  onToggleFavorite={onToggleFavorite}
+                  onSelect={handleSelectPokemon}
                 />
               ))}
             </motion.div>
@@ -293,5 +361,7 @@ export function PokemonGrid({
         )}
       </div>
     </section>
+    )}
+    </>
   );
 }

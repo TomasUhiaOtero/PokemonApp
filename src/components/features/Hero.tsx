@@ -1,6 +1,33 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Sparkles, Zap, ChevronDown, ArrowRight } from 'lucide-react';
+import { Sparkles, Zap, ChevronDown } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+
+const POKEMON_GIFS = [
+  {
+    src: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExeDFhY2VkMWM3OGg3ajlhcG5odGJscmV2bnNtNm55M3o1MHY0ZWZudyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/z8OcWLLk4SrpS/giphy.gif',
+    alt: 'Animated Pikachu in Pokemon game',
+  },
+  {
+    src: 'https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3c28xZmE0N29mbW50b2c5Y216b2g3d2RxcjJtcjZpeDR5MjMycDgwayZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/FX5aKofPgom36xXCSe/giphy.gif',
+    alt: 'Pokemon battle animation',
+  },
+  {
+    src: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdmc0ZzJzZTFyemhndWFmZW1vamVpeWszcnFrazdpZjR6bXg5MGluayZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/AQl0NdNJLEq7BPnX8E/giphy.gif',
+    alt: 'Pokemon trainer animation',
+  },
+];
+
+const floatVariants = {
+  initial: { y: 0 },
+  animate: {
+    y: [0, -12, 0],
+    transition: {
+      duration: 3,
+      repeat: Infinity,
+      ease: [0.45, 0, 0.55, 1] as const,
+    },
+  },
+};
 
 export function Hero() {
   const { scrollY } = useScroll();
@@ -41,37 +68,35 @@ export function Hero() {
           of Pokemon
         </motion.h1>
 
-        <motion.p
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 text-shadow"
-        >
-          Explore the complete Pokedex with detailed stats, types, abilities, and more. 
-          Your ultimate companion for every Pokemon journey.
-        </motion.p>
-
+        {/* Pokemon GIFs Section */}
         <motion.div
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="mt-10 flex flex-wrap justify-center gap-4 md:gap-6"
         >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 bg-gradient-to-r from-pokemon-red to-pokemon-yellow text-white rounded-full font-semibold text-lg hover:shadow-2xl hover:shadow-pokemon-red/40 transition-all flex items-center gap-2"
-          >
-            Start Exploring
-            <ArrowRight size={20} />
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 glass text-white rounded-full font-semibold text-lg hover:bg-white/10 transition-all"
-          >
-            Learn More
-          </motion.button>
+          {POKEMON_GIFS.map((gif, index) => (
+            <motion.div
+              key={gif.src}
+              variants={floatVariants}
+              initial="initial"
+              animate="animate"
+              style={{
+                animationDelay: `${index * 0.2}s`,
+              }}
+            >
+              <img
+                src={gif.src}
+                alt={gif.alt}
+                className={`object-cover rounded-lg ${
+                  index === 0 
+                    ? 'w-36 h-36 md:w-48 md:h-48' 
+                    : 'w-28 h-28 md:w-36 md:h-36'
+                }`}
+                loading="lazy"
+              />
+            </motion.div>
+          ))}
         </motion.div>
       </motion.div>
 
@@ -101,12 +126,15 @@ export function Hero() {
         transition={{ delay: 1 }}
         className="absolute bottom-10 left-1/2 -translate-x-1/2"
       >
-        <motion.div
+        <motion.button
+          onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 1.5 }}
+          className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pokemon-yellow rounded-full p-2"
+          aria-label="Scroll to features section"
         >
-          <ChevronDown className="text-white/40" size={32} aria-hidden="true" />
-        </motion.div>
+          <ChevronDown className="text-white/40 hover:text-white/60 transition-colors" size={32} />
+        </motion.button>
       </motion.div>
     </section>
   );

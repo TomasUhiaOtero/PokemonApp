@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Search, Map, Star } from 'lucide-react';
+import { Search, Map, Star, Heart } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Feature {
@@ -23,7 +23,7 @@ const FEATURES: Feature[] = [
     delay: 0.1,
   },
   {
-    Icon: Star,
+    Icon: Heart,
     title: 'Favorites',
     description: 'Save your favorite Pokemon and build your dream team.',
     delay: 0.2,

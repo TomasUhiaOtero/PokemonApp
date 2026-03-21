@@ -10,11 +10,33 @@ const DEFAULT_TYPE_COLOR = '#6b7280';
 interface PokemonCardProps {
   pokemon: Pokemon;
   index: number;
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: number) => void;
+  onSelect?: (pokemon: Pokemon) => void;
 }
 
-export const PokemonCard = memo(function PokemonCard({ pokemon, index }: PokemonCardProps) {
+export const PokemonCard = memo(function PokemonCard({ 
+  pokemon, 
+  index, 
+  isFavorite = false, 
+  onToggleFavorite,
+  onSelect
+}: PokemonCardProps) {
   const primaryType = pokemon.types[0];
   const color = TYPE_COLORS[primaryType] || DEFAULT_TYPE_COLOR;
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggleFavorite) {
+      onToggleFavorite(pokemon.id);
+    }
+  };
+
+  const handleCardClick = () => {
+    if (onSelect) {
+      onSelect(pokemon);
+    }
+  };
 
   return (
     <motion.div
@@ -25,6 +47,7 @@ export const PokemonCard = memo(function PokemonCard({ pokemon, index }: Pokemon
       whileHover={{ y: -8, scale: 1.02 }}
       className="glass rounded-3xl p-6 cursor-pointer group relative overflow-hidden"
       style={{ background: `linear-gradient(135deg, ${color}15, ${color}05)` }}
+      onClick={handleCardClick}
     >
       <div 
         className="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20" 
@@ -38,10 +61,18 @@ export const PokemonCard = memo(function PokemonCard({ pokemon, index }: Pokemon
           <motion.button
             whileHover={{ scale: 1.2 }}
             whileTap={{ scale: 0.9 }}
-            className="text-white/40 hover:text-pokemon-yellow transition-colors"
-            aria-label={`Add ${pokemon.name} to favorites`}
+            onClick={handleToggleFavorite}
+            className={`transition-colors cursor-pointer ${
+              isFavorite 
+                ? 'text-pokemon-red' 
+                : 'text-white/40 hover:text-pokemon-red'
+            }`}
+            aria-label={isFavorite 
+              ? `Remove ${pokemon.name} from favorites` 
+              : `Add ${pokemon.name} to favorites`
+            }
           >
-            <Heart size={20} />
+            <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
           </motion.button>
         </div>
         <div

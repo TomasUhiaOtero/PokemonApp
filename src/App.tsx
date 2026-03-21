@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { usePokemonOptimized, usePokemonFilter, pokemonApi } from './hooks/usePokemon';
+import { usePokemonOptimized, usePokemonFilter, useFavorites, pokemonApi } from './hooks/usePokemon';
 import { Hero, Features, PokemonGrid, CTA, Footer } from './components/features';
 import { CacheStatus, FluidNavigation } from './components/ui';
 
@@ -56,13 +56,23 @@ function App() {
     cacheStatus,
   } = usePokemonOptimized();
 
+  const { 
+    favoriteIds, 
+    isFavorite, 
+    toggleFavorite, 
+    favoriteCount 
+  } = useFavorites();
+
   const {
     activeTypes,
     searchQuery,
+    showFavoritesOnly,
     filteredPokemons,
     handleTypeToggle,
+    handleFavoritesToggle,
     handleSearchChange,
-  } = usePokemonFilter(pokemons);
+    resetFilters,
+  } = usePokemonFilter({ pokemons, favoriteIds: new Set([...favoriteIds]) });
 
   if (error && pokemons.length === 0) {
     return (
@@ -100,6 +110,11 @@ function App() {
         searchQuery={searchQuery}
         onTypeToggle={handleTypeToggle}
         onSearchChange={handleSearchChange}
+        showFavoritesOnly={showFavoritesOnly}
+        onFavoritesToggle={handleFavoritesToggle}
+        favoriteCount={favoriteCount}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
         hasMore={hasMore}
         isLoadingMore={isLoadingMore}
         onLoadMore={loadMore}
