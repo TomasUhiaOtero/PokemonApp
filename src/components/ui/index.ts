@@ -4,3 +4,5 @@ export { SearchInput } from './SearchInput';
 export { CacheStatus } from './CacheStatus';
 export { TypeIcon, TypeIconTinted, TypeIconSimple } from './TypeIcon';
 export { FluidNavigation } from './FluidNavigation';
+export { Tooltip } from './Tooltip';
+export { StaggeredMenu } from './StaggeredMenu';

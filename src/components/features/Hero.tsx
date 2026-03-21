@@ -1,6 +1,7 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Sparkles, Zap, ChevronDown } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { Zap, ChevronDown } from 'lucide-react';
+import { useRef } from 'react';
+import { SplitText } from '../ui/SplitText';
 
 const POKEMON_GIFS = [
   {
@@ -40,7 +41,7 @@ export function Hero() {
   return (
     <section 
       ref={ref}
-      className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center pt-4 overflow-hidden"
     >
       <motion.div 
         style={{ y: heroY, opacity: heroOpacity }} 
@@ -56,17 +57,24 @@ export function Hero() {
           <span className="text-sm text-white/80">Gotta Catch 'Em All</span>
         </motion.div>
 
-        <motion.h1
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight text-shadow"
-        >
-          Discover the{' '}
-          <span className="text-gradient text-shadow-glow">World</span>
-          <br />
-          of Pokemon
-        </motion.h1>
+        <div className="mb-6">
+          <SplitText
+            text="Discover the world of"
+            className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight text-shadow"
+            delay={0.2}
+            duration={0.9}
+            ease="bounce.out"
+            splitType="chars"
+          />
+          <motion.span
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.3, duration: 0.6, ease: 'backOut' }}
+            className="block text-gradient text-6xl md:text-8xl lg:text-9xl font-bold tracking-wider text-shadow-glow"
+          >
+            POKEMON
+          </motion.span>
+        </div>
 
         {/* Pokemon GIFs Section */}
         <motion.div

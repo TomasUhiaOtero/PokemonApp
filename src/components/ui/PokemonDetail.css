@@ -5,10 +5,11 @@
   backdrop-filter: blur(8px);
   z-index: 100;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 1rem;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .pokemon-detail-container {
@@ -20,6 +21,22 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   overflow: clip;
   isolation: isolate;
+  margin: auto;
+}
+
+@media (max-width: 768px) {
+  .pokemon-detail-overlay {
+    padding: 0.5rem;
+    align-items: flex-start;
+    padding-top: 1rem;
+  }
+  
+  .pokemon-detail-container {
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    border-radius: 1rem;
+    margin: 0;
+  }
 }
 
 .pokemon-detail-grid {
@@ -31,6 +48,7 @@
 @media (max-width: 768px) {
   .pokemon-detail-grid {
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 }
 
@@ -45,6 +63,7 @@
 
 @media (max-width: 768px) {
   .pokemon-detail-left {
+    padding: 1.5rem 1rem 1rem;
     border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
@@ -87,6 +106,17 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  z-index: 20;
+}
+
+@media (max-width: 768px) {
+  .pokemon-detail-close-btn {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.5);
+  }
 }
 
 .pokemon-detail-close-btn:hover {
@@ -100,6 +130,16 @@
   align-items: center;
   width: 100%;
   max-width: 280px;
+}
+
+@media (max-width: 768px) {
+  .pokemon-detail-card {
+    max-width: 100%;
+  }
+  
+  .pokemon-detail-name {
+    font-size: 1.5rem;
+  }
 }
 
 .pokemon-detail-image-wrapper {
@@ -129,6 +169,18 @@
   height: 160px;
   object-fit: contain;
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+}
+
+@media (max-width: 768px) {
+  .pokemon-detail-image-wrapper {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .pokemon-detail-image {
+    width: 120px;
+    height: 120px;
+  }
 }
 
 .pokemon-detail-number {
@@ -238,6 +290,14 @@
   position: relative;
 }
 
+@media (max-width: 768px) {
+  .pokemon-detail-right-scroll {
+    padding-right: 0;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
 /* Custom Scrollbar Styling */
 .pokemon-detail-right-scroll::-webkit-scrollbar {
   width: 12px;
@@ -291,16 +351,11 @@
 
 @media (max-width: 768px) {
   .pokemon-detail-right {
-    padding: 1.5rem;
-  }
-  
-  .pokemon-detail-right-scroll {
-    max-height: none;
-    padding-right: 0.5rem;
+    padding: 1.5rem 1rem;
   }
   
   .pokemon-detail-right-scroll::-webkit-scrollbar {
-    width: 10px;
+    display: none;
   }
 }
 

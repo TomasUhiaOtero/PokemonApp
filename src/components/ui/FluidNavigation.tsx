@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { Tooltip } from "./Tooltip";
 
 // ------------------------------------------
 // Types
@@ -70,7 +71,6 @@ export function FluidNavigation({
   onNavigate 
 }: FluidNavigationProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [flashingIndex, setFlashingIndex] = useState<number | null>(null);
 
   const handleClick = (index: number) => {
@@ -103,9 +103,6 @@ export function FluidNavigation({
     }
   };
 
-  // Determine which index to highlight (hover takes priority over active)
-  const highlightedIndex = hoveredIndex !== null ? hoveredIndex : activeIndex;
-
   // Get the icon for each item
   const getIcon = (index: number) => {
     switch (index) {
@@ -127,7 +124,7 @@ export function FluidNavigation({
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       style={{
         position: "fixed",
-        top: 32,
+        top: 48,
         left: 0,
         right: 0,
         zIndex: 50,
@@ -177,19 +174,12 @@ export function FluidNavigation({
           }}
         />
         {items.map((item, index) => {
-          const isHovered = hoveredIndex === index;
-          const isHighlighted = highlightedIndex === index;
           const isFlashing = flashingIndex === index;
-          const showTooltip = isHovered;
 
           return (
-            // Contenedor que agrupa botón + tooltip
-            <div key={item.title} className="relative flex items-center">
-              {/* Botón */}
+            <Tooltip key={item.title} content={item.title} side="top" sideOffset={12} delay={0}>
               <motion.div
                 layout
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
                 onClick={() => handleClick(index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
                 tabIndex={0}
@@ -237,70 +227,11 @@ export function FluidNavigation({
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  animate={{
-                    scale: isHighlighted ? 1.1 : 1,
-                  }}
-                  transition={{ duration: 0.2 }}
                 >
                   {getIcon(index)}
                 </motion.div>
               </motion.div>
-
-              {/* Tooltip/Name - aparece FUERA del botón, a la derecha */}
-              <AnimatePresence>
-                {showTooltip && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10, scale: 0.8 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={{ opacity: 0, x: -10, scale: 0.8 }}
-                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                    style={{
-                      position: "absolute",
-                      left: "100%",
-                      marginLeft: "12px",
-                      zIndex: 20,
-                      pointerEvents: "none",
-                    }}
-                  >
-                    <motion.div
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 5 }}
-                      transition={{ duration: 0.2, delay: 0.05 }}
-                      style={{
-                        padding: "10px 16px",
-                        background: "rgba(15, 23, 42, 0.95)",
-                        backdropFilter: "blur(12px)",
-                        WebkitBackdropFilter: "blur(12px)",
-                        color: "#ffffff",
-                        borderRadius: "12px",
-                        fontSize: "14px",
-                        fontWeight: 500,
-                        whiteSpace: "nowrap",
-                        boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                      }}
-                    >
-                      {item.title}
-                      {/* Flechita */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          right: "100%",
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          width: 0,
-                          height: 0,
-                          borderTop: "6px solid transparent",
-                          borderBottom: "6px solid transparent",
-                          borderRight: "8px solid rgba(15, 23, 42, 0.95)",
-                        }}
-                      />
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            </Tooltip>
           );
         })}
       </motion.div>

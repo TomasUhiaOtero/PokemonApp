@@ -1,7 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { usePokemonOptimized, usePokemonFilter, useFavorites, pokemonApi } from './hooks/usePokemon';
 import { Hero, Features, PokemonGrid, CTA, Footer } from './components/features';
-import { CacheStatus, FluidNavigation } from './components/ui';
+import { CacheStatus, StaggeredMenu } from './components/ui';
 
 const AnimatedBackground = lazy(() => 
   import('./components/layout/AnimatedBackground').then(m => ({ default: m.AnimatedBackground }))
@@ -101,7 +101,20 @@ function App() {
       <Suspense fallback={null}>
         <AnimatedBackground />
       </Suspense>
-      <FluidNavigation />
+      <StaggeredMenu
+        position="right"
+        colors={['#ef4444', '#eab308']}
+        accentColor="#ef4444"
+        menuButtonColor="#ffffff"
+        displayItemNumbering={true}
+        isFixed={true}
+        closeOnClickAway={true}
+        items={[
+          { label: 'Home', link: '#top', ariaLabel: 'Go to Home' },
+          { label: 'Pokemons', link: '#pokemons', ariaLabel: 'Go to Pokemons' },
+          { label: 'About', link: '#cta', ariaLabel: 'Go to About' },
+        ]}
+      />
       <Hero />
       <Features />
       <PokemonGrid
