@@ -1,6 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { usePokemonOptimized, usePokemonFilter, useFavorites, pokemonApi } from './hooks/usePokemon';
-import { Hero, Features, PokemonGrid, CTA, Footer } from './components/features';
+import { Hero, FeaturesCarousel, PokemonGrid, CTA, Footer } from './components/features';
 import { CacheStatus, StaggeredMenu } from './components/ui';
 
 const AnimatedBackground = lazy(() => 
@@ -117,7 +117,7 @@ function App() {
         ]}
       />
       <Hero />
-      <Features />
+      <FeaturesCarousel />
       <PokemonGrid
         pokemons={filteredPokemons}
         activeTypes={activeTypes}
