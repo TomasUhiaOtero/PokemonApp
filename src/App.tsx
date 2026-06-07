@@ -1,7 +1,8 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense, useState } from 'react';
 import { usePokemonOptimized, usePokemonFilter, useFavorites, pokemonApi } from './hooks/usePokemon';
 import { Hero, FeaturesCarousel, PokemonGrid, CTA, Footer } from './components/features';
 import { CacheStatus, StaggeredMenu } from './components/ui';
+import { DEFAULT_GENERATION } from './lib/constants';
 
 const AnimatedBackground = lazy(() => 
   import('./components/layout/AnimatedBackground').then(m => ({ default: m.AnimatedBackground }))
@@ -39,13 +40,12 @@ function ErrorView({ message, onRetry }: { message: string; onRetry?: () => void
 }
 
 function App() {
-  useEffect(() => {
-    pokemonApi.cleanOldGenerationsCache();
-  }, []);
+  const [selectedGeneration, setSelectedGeneration] = useState(DEFAULT_GENERATION);
 
   const {
     pokemons,
     isLoading,
+    isSwitchingGeneration,
     isLoadingMore,
     error,
     hasMore,
@@ -54,7 +54,8 @@ function App() {
     loadMore,
     refresh,
     cacheStatus,
-  } = usePokemonOptimized();
+    allPokemonNames,
+  } = usePokemonOptimized({ generation: selectedGeneration });
 
   const { 
     favoriteIds, 
@@ -68,11 +69,17 @@ function App() {
     searchQuery,
     showFavoritesOnly,
     filteredPokemons,
+    isSearching,
     handleTypeToggle,
     handleFavoritesToggle,
     handleSearchChange,
     resetFilters,
-  } = usePokemonFilter({ pokemons, favoriteIds: new Set([...favoriteIds]) });
+  } = usePokemonFilter({ pokemons, favoriteIds: new Set([...favoriteIds]), allPokemonNames });
+
+  // Resetear filtros cuando cambia la generación
+  useEffect(() => {
+    resetFilters();
+  }, [selectedGeneration]);
 
   if (error && pokemons.length === 0) {
     return (
@@ -85,7 +92,7 @@ function App() {
     );
   }
 
-  if (isLoading && pokemons.length === 0) {
+  if (isLoading && pokemons.length === 0 && !isSwitchingGeneration) {
     return (
       <>
         <Suspense fallback={null}>
@@ -124,6 +131,8 @@ function App() {
         searchQuery={searchQuery}
         onTypeToggle={handleTypeToggle}
         onSearchChange={handleSearchChange}
+        generation={selectedGeneration}
+        onGenerationChange={setSelectedGeneration}
         showFavoritesOnly={showFavoritesOnly}
         onFavoritesToggle={handleFavoritesToggle}
         favoriteCount={favoriteCount}
@@ -131,6 +140,7 @@ function App() {
         onToggleFavorite={toggleFavorite}
         hasMore={hasMore}
         isLoadingMore={isLoadingMore}
+        isSwitchingGeneration={isSwitchingGeneration}
         onLoadMore={loadMore}
         totalLoaded={totalLoaded}
         totalCount={totalCount}

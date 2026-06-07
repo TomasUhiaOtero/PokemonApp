@@ -4,8 +4,8 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { PokemonCard, TypeFilter, SearchInput } from '../ui';
 import { PokemonDetailView } from '../ui/PokemonDetail';
 import type { Pokemon, PokemonType, PokemonDetail } from '../../lib/types';
-import { POKEMON_LIMIT } from '../../lib/constants';
 import { usePokemonDetail } from '../../hooks/usePokemonDetail';
+import { GenerationSelector } from './GenerationSelector';
 
 interface PokemonGridProps {
   pokemons: Pokemon[];
@@ -13,13 +13,17 @@ interface PokemonGridProps {
   searchQuery: string;
   onTypeToggle: (type: PokemonType) => void;
   onSearchChange: (query: string) => void;
+  // Generation props
+  generation: number;
+  onGenerationChange: (gen: number) => void;
   // Favorites props
   showFavoritesOnly?: boolean;
   onFavoritesToggle?: () => void;
   favoriteCount?: number;
   isFavorite?: (id: number) => boolean;
   onToggleFavorite?: (id: number) => void;
-  // Infinite scroll props
+  // Loading props
+  isSwitchingGeneration?: boolean;
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
@@ -152,11 +156,14 @@ export function PokemonGrid({
   searchQuery,
   onTypeToggle,
   onSearchChange,
+  generation,
+  onGenerationChange,
   showFavoritesOnly = false,
   onFavoritesToggle,
   favoriteCount = 0,
   isFavorite,
   onToggleFavorite,
+  isSwitchingGeneration = false,
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
@@ -191,10 +198,10 @@ export function PokemonGrid({
     }
   }, [currentPage, totalPages, hasMore, onLoadMore]);
 
-  // Reset a página 1 cuando cambian los filtros
+  // Reset a página 1 cuando cambian los filtros o la generación
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTypes, searchQuery, showFavoritesOnly]);
+  }, [activeTypes, searchQuery, showFavoritesOnly, generation]);
 
   // Navegación con teclado
   useEffect(() => {
@@ -270,6 +277,12 @@ export function PokemonGrid({
           </p>
         </motion.div>
 
+        {/* Selector de generación */}
+        <GenerationSelector
+          generation={generation}
+          onGenerationChange={onGenerationChange}
+        />
+
         {/* Filtros */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -335,10 +348,24 @@ export function PokemonGrid({
               <span className="text-white/60 text-sm">Loading more Pokemon...</span>
             </motion.div>
           )}
+          {/* Loading overlay for generation switch */}
+          {isSwitchingGeneration && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center">
+              <div className="absolute inset-0 bg-pokemon-dark/60 backdrop-blur-sm rounded-2xl" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative flex items-center gap-3 px-6 py-3 glass rounded-full"
+              >
+                <Loader2 className="w-5 h-5 text-pokemon-red animate-spin" />
+                <span className="text-white/80 text-sm">Loading generation...</span>
+              </motion.div>
+            </div>
+          )}
         </div>
 
         {/* Empty state */}
-        {pokemons.length === 0 && !isLoadingMore && (
+        {pokemons.length === 0 && !isLoadingMore && !isSwitchingGeneration && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

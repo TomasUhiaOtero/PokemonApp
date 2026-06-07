@@ -43,8 +43,18 @@ export const POKEMON_TYPES = [
 
 export const API_BASE_URL = 'https://pokeapi.co/api/v2';
 
-export const POKEMON_LIMIT = 151;
+export const GENERATIONS = [
+  { id: 1, name: 'Generation I', region: 'Kanto' },
+  { id: 2, name: 'Generation II', region: 'Johto' },
+  { id: 3, name: 'Generation III', region: 'Hoenn' },
+  { id: 4, name: 'Generation IV', region: 'Sinnoh' },
+  { id: 5, name: 'Generation V', region: 'Unova' },
+  { id: 6, name: 'Generation VI', region: 'Kalos' },
+  { id: 7, name: 'Generation VII', region: 'Alola' },
+  { id: 8, name: 'Generation VIII', region: 'Galar' },
+  { id: 9, name: 'Generation IX', region: 'Paldea' },
+] as const;
+
+export const DEFAULT_GENERATION = 1;
 
 export const BATCH_SIZE = 20; // Cantidad de Pokémon a cargar por batch
-
-export const INITIAL_LOAD = 151; // Pokémon a cargar inicialmente

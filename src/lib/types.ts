@@ -1,3 +1,9 @@
+export interface Generation {
+  id: number;
+  name: string;
+  region: string;
+}
+
 export interface Pokemon {
   id: number;
   name: string;

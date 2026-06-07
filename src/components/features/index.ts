@@ -3,5 +3,6 @@ export { Hero } from './Hero';
 export { Features } from './Features';
 export { FeaturesCarousel } from './FeaturesCarousel';
 export { PokemonGrid } from './PokemonGrid';
+export { GenerationSelector } from './GenerationSelector';
 export { CTA } from './CTA';
 export { Footer } from './Footer';

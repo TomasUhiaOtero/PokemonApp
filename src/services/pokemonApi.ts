@@ -4,7 +4,7 @@
  */
 
 import type { Pokemon, PokemonDetail, PokemonStat, PokemonAbility, EvolutionStage } from '../lib/types';
-import { API_BASE_URL, POKEMON_LIMIT, BATCH_SIZE } from '../lib/constants';
+import { API_BASE_URL, BATCH_SIZE } from '../lib/constants';
 
 // ============================================================================
 // Tipos y Utilidades
@@ -64,6 +64,12 @@ interface PokemonSpeciesResponse {
     language: { name: string };
   }>;
   evolution_chain: { url: string };
+}
+
+interface GenerationResponse {
+  id: number;
+  name: string;
+  pokemon_species: Array<{ name: string; url: string }>;
 }
 
 interface EvolutionChainResponse {
@@ -298,9 +304,7 @@ class PokemonAPIClient {
   }
 
   /**
-   * Obtener solo el total de Pokémon (metadata)
-   * Muy rápido, solo para saber cuántas páginas mostrar
-   * Limita automáticamente a POKEMON_LIMIT (primera generación)
+   * Obtener el total de Pokémon registrados en PokeAPI
    */
   async getPokemonListMetadata(): Promise<number> {
     const cacheKey = 'list_metadata_count';
@@ -315,9 +319,72 @@ class PokemonAPIClient {
       { retries: 3 }
     );
     
-    const count = Math.min(data.count, POKEMON_LIMIT);
-    pokemonCache.set(cacheKey, { count });
-    return count;
+    pokemonCache.set(cacheKey, { count: data.count });
+    return data.count;
+  }
+
+  /**
+   * Obtener todos los Pokémon básicos (id, name) para búsqueda global
+   */
+  async getAllPokemonBasic(): Promise<Array<{ id: number; name: string }>> {
+    const cacheKey = 'all_pokemon_basic';
+    
+    const cached = pokemonCache.get<Array<{ id: number; name: string }>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const data = await this.getPokemonList(2000, 0);
+    const result = data.results
+      .map((item) => {
+        const parts = item.url.split('/');
+        const id = parseInt(parts[parts.length - 2], 10);
+        return { id, name: item.name };
+      })
+      .filter((item) => !isNaN(item.id) && item.id > 0);
+
+    pokemonCache.set(cacheKey, result);
+    return result;
+  }
+
+  /**
+   * Obtener la lista de species IDs para una generación
+   * Usa el endpoint /generation/{id} de PokeAPI
+   */
+  async getGenerationSpecies(generationId: number): Promise<number[]> {
+    if (!generationId || generationId < 1) {
+      throw new Error('Invalid generation ID');
+    }
+
+    const cacheKey = `generation_${generationId}_species`;
+    
+    const cached = pokemonCache.get<number[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const data = await fetchWithRetry<GenerationResponse>(
+      `${this.baseUrl}/generation/${generationId}`,
+      { retries: 3 }
+    );
+
+    const ids = data.pokemon_species
+      .map((species) => {
+        const parts = species.url.split('/');
+        return parseInt(parts[parts.length - 2], 10);
+      })
+      .filter((id) => !isNaN(id) && id > 0);
+
+    pokemonCache.set(cacheKey, ids);
+    return ids;
+  }
+
+  /**
+   * Obtener todos los Pokémon de una generación específica
+   */
+  async getPokemonByGeneration(generationId: number): Promise<Pokemon[]> {
+    const ids = await this.getGenerationSpecies(generationId);
+    return this.getPokemonBatch(ids);
   }
 
   /**
@@ -595,35 +662,6 @@ class PokemonAPIClient {
     pokemonCache.invalidate();
   }
 
-  /**
-   * Limpiar Pokémon que no son de primera generación (>151)
-   * Útil para corregir caché contaminado
-   */
-  cleanOldGenerationsCache(): void {
-    try {
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k?.startsWith(`${STORAGE_KEY}_pokemon_`)) {
-          // Extraer el ID del Pokémon del key
-          const match = k.match(/pokemon_(\d+)/);
-          if (match) {
-            const id = parseInt(match[1], 10);
-            if (id > POKEMON_LIMIT) {
-              keysToRemove.push(k);
-            }
-          }
-        }
-      }
-      keysToRemove.forEach((k) => {
-        localStorage.removeItem(k);
-        pokemonCache.invalidate(k.replace(`${STORAGE_KEY}_`, ''));
-      });
-      console.log(`🧹 [API] Limpiados ${keysToRemove.length} Pokémon de generaciones antiguas`);
-    } catch (error) {
-      console.warn('Error cleaning old generations cache:', error);
-    }
-  }
 }
 
 export const pokemonApi = new PokemonAPIClient();

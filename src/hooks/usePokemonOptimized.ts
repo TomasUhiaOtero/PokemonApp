@@ -1,18 +1,16 @@
-/**
- * Hook optimizado para cargar Pokémon con:
- * - Carga en 2 fases (metadata rápida + detalles progresivos)
- * - Caché inteligente
- * - Siempre muestra todas las páginas basándose en POKEMON_LIMIT
- */
-
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { Pokemon } from '../lib/types';
 import { pokemonApi, pokemonCache } from '../services/pokemonApi';
-import { POKEMON_LIMIT, BATCH_SIZE, INITIAL_LOAD } from '../lib/constants';
+import { BATCH_SIZE } from '../lib/constants';
+
+interface UsePokemonOptimizedProps {
+  generation: number;
+}
 
 interface UsePokemonOptimizedReturn {
   pokemons: Pokemon[];
   isLoading: boolean;
+  isSwitchingGeneration: boolean;
   isLoadingMore: boolean;
   error: string | null;
   hasMore: boolean;
@@ -24,6 +22,7 @@ interface UsePokemonOptimizedReturn {
     age: number | null;
     isCached: boolean;
   };
+  allPokemonNames: Array<{ id: number; name: string }>;
 }
 
 function deduplicateById(pokemons: Pokemon[]): Pokemon[] {
@@ -32,158 +31,156 @@ function deduplicateById(pokemons: Pokemon[]): Pokemon[] {
   );
 }
 
-export function usePokemonOptimized(): UsePokemonOptimizedReturn {
+export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): UsePokemonOptimizedReturn {
   const [pokemons, setPokemons] = useState<Pokemon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSwitchingGeneration, setIsSwitchingGeneration] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalLoaded, setTotalLoaded] = useState(0);
-  const [totalCount, setTotalCount] = useState(POKEMON_LIMIT);
+  const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  
-  const loadedIds = useRef<Set<number>>(new Set());
-  const initialized = useRef(false);
-  
-  const cacheAge = useMemo(() => 
-    pokemonCache.getCacheAge(`pokemon_1`), 
-    [pokemons.length]
+  const [allPokemonNames, setAllPokemonNames] = useState<Array<{ id: number; name: string }>>([]);
+
+  const speciesIdsRef = useRef<number[]>([]);
+  const loadedIdsRef = useRef<Set<number>>(new Set());
+  const isInitialLoadRef = useRef(true);
+
+  const cacheAge = useMemo(() =>
+    pokemonCache.getCacheAge(`generation_${generation}_species`),
+    [generation, pokemons.length]
   );
 
-  const loadBatch = useCallback(async (offset: number, count: number): Promise<Pokemon[]> => {
-    try {
-      const list = await pokemonApi.getPokemonList(count, offset);
-      
-      const ids = list.results
-        .map((item) => {
-          const parts = item.url.split('/');
-          return parseInt(parts[parts.length - 2], 10);
-        })
-        .filter((id) => id >= 1 && id <= POKEMON_LIMIT);
-
-      const newIds = ids.filter((id) => !loadedIds.current.has(id));
-      
-      if (newIds.length === 0) {
-        return [];
-      }
-
-      const details = await pokemonApi.getPokemonBatch(newIds);
-      details.forEach((p) => loadedIds.current.add(p.id));
-      
-      return details;
-    } catch (err) {
-      console.error('Error loading batch:', err);
-      throw err;
-    }
+  // Cargar lista global de nombres al montar
+  useEffect(() => {
+    if (allPokemonNames.length > 0) return;
+    pokemonApi.getAllPokemonBasic().then(setAllPokemonNames);
   }, []);
 
+  // Resetear cuando cambia la generación
   useEffect(() => {
-    if (initialized.current) return;
-    
-    const initMetadata = async () => {
-      try {
-        const count = await pokemonApi.getPokemonListMetadata();
-        setTotalCount(count);
-        setHasMore(count > 0);
-      } catch (err) {
-        console.error('Error loading metadata:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load metadata');
-      }
-    };
+    setIsSwitchingGeneration(true);
+    speciesIdsRef.current = [];
+    loadedIdsRef.current.clear();
+    setTotalLoaded(0);
+    setHasMore(true);
+    setError(null);
+  }, [generation]);
 
-    initMetadata();
-  }, []);
-
+  // Cargar los Pokémon de la generación seleccionada
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-    
-    const initializeData = async () => {
+    let cancelled = false;
+
+    const loadGeneration = async () => {
       setIsLoading(true);
-      setError(null);
-      
+
       try {
+        const ids = await pokemonApi.getGenerationSpecies(generation);
+
+        if (cancelled) return;
+
+        speciesIdsRef.current = ids;
+        setTotalCount(ids.length);
+
         const cachedPokemons: Pokemon[] = [];
-        
-        for (let i = 1; i <= POKEMON_LIMIT; i++) {
-          const cached = pokemonCache.get<Pokemon>(`pokemon_${i}`);
+        for (const id of ids) {
+          const cached = pokemonCache.get<Pokemon>(`pokemon_${id}`);
           if (cached) {
             cachedPokemons.push(cached);
-            loadedIds.current.add(i);
+            loadedIdsRef.current.add(id);
           }
         }
 
-        if (cachedPokemons.length > 0) {
-          const uniquePokemons = deduplicateById(cachedPokemons);
-          setPokemons(uniquePokemons.sort((a, b) => a.id - b.id));
-          setTotalLoaded(cachedPokemons.length);
-          setIsLoading(false);
-          
-          if (cachedPokemons.length >= POKEMON_LIMIT) {
-            setHasMore(false);
-            return;
-          }
+        if (cancelled) return;
+
+        const missingIds = ids.filter((id) => !loadedIdsRef.current.has(id));
+
+        if (missingIds.length > 0) {
+          const freshPokemons = await pokemonApi.getPokemonBatch(missingIds);
+          if (cancelled) return;
+
+          const allPokemons = deduplicateById([...cachedPokemons, ...freshPokemons])
+            .sort((a, b) => a.id - b.id);
+
+          setPokemons(allPokemons);
+          setTotalLoaded(allPokemons.length);
+          setHasMore(false);
+        } else {
+          const sorted = deduplicateById(cachedPokemons).sort((a, b) => a.id - b.id);
+          setPokemons(sorted);
+          setTotalLoaded(sorted.length);
+          setHasMore(false);
         }
 
-        const firstBatch = await loadBatch(0, INITIAL_LOAD);
-        const allPokemons = [...cachedPokemons, ...firstBatch];
-        const uniquePokemons = deduplicateById(allPokemons);
-        
-        setPokemons(uniquePokemons.sort((a, b) => a.id - b.id));
-        setTotalLoaded(uniquePokemons.length);
-        setHasMore(uniquePokemons.length < POKEMON_LIMIT);
+        isInitialLoadRef.current = false;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load Pokemon');
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load Pokemon');
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+          setIsSwitchingGeneration(false);
+        }
       }
     };
 
-    initializeData();
-  }, [loadBatch]);
+    loadGeneration();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [generation]);
 
   const loadMore = useCallback(async () => {
-    if (isLoadingMore || !hasMore || pokemons.length >= POKEMON_LIMIT) {
-      return;
-    }
+    if (isLoadingMore || !hasMore) return;
 
     setIsLoadingMore(true);
-    
     try {
-      const nextBatch = await loadBatch(pokemons.length, BATCH_SIZE);
-      
-      if (nextBatch.length === 0) {
+      const allIds = speciesIdsRef.current;
+      const nextIds = allIds.filter((id) => !loadedIdsRef.current.has(id));
+
+      if (nextIds.length === 0) {
         setHasMore(false);
-      } else {
-        setPokemons((prev) => {
-          const combined = [...prev, ...nextBatch];
-          const unique = deduplicateById(combined);
-          return unique.sort((a, b) => a.id - b.id);
-        });
-        setTotalLoaded((prev) => prev + nextBatch.length);
-        
-        if (pokemons.length + nextBatch.length >= POKEMON_LIMIT) {
-          setHasMore(false);
-        }
+        return;
+      }
+
+      const batchIds = nextIds.slice(0, BATCH_SIZE);
+      const batchPokemons = await pokemonApi.getPokemonBatch(batchIds);
+
+      batchPokemons.forEach((p) => loadedIdsRef.current.add(p.id));
+
+      setPokemons((prev) => {
+        const combined = deduplicateById([...prev, ...batchPokemons]);
+        return combined.sort((a, b) => a.id - b.id);
+      });
+      setTotalLoaded((prev) => prev + batchPokemons.length);
+
+      if (loadedIdsRef.current.size >= allIds.length) {
+        setHasMore(false);
       }
     } catch (err) {
       console.error('Error loading more:', err);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, pokemons.length, loadBatch]);
+  }, [isLoadingMore, hasMore]);
 
   const refresh = useCallback(() => {
     pokemonCache.invalidate();
-    loadedIds.current.clear();
-    initialized.current = false;
+    speciesIdsRef.current = [];
+    loadedIdsRef.current.clear();
     setPokemons([]);
     setTotalLoaded(0);
     setHasMore(true);
+    setIsLoading(true);
+    setError(null);
   }, []);
 
   return {
     pokemons,
     isLoading,
+    isSwitchingGeneration,
     isLoadingMore,
     error,
     hasMore,
@@ -195,6 +192,7 @@ export function usePokemonOptimized(): UsePokemonOptimizedReturn {
       age: cacheAge,
       isCached: cacheAge !== null,
     },
+    allPokemonNames,
   };
 }
 
