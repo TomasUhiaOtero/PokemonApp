@@ -6,7 +6,7 @@ interface UsePokemonDetailReturn {
   pokemonDetail: PokemonDetail | null;
   isLoading: boolean;
   error: string | null;
-  fetchPokemonDetail: (id: number) => Promise<void>;
+  fetchPokemonDetail: (id: number, formName?: string) => Promise<void>;
   clearDetail: () => void;
 }
 
@@ -15,13 +15,13 @@ export function usePokemonDetail(): UsePokemonDetailReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPokemonDetail = useCallback(async (id: number) => {
+  const fetchPokemonDetail = useCallback(async (id: number, formName?: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
       const detail = await pokemonApi.getPokemonDetailFull(id);
-      setPokemonDetail(detail);
+      setPokemonDetail(formName ? { ...detail, formName } : detail);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load Pokemon details';
       setError(message);

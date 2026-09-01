@@ -3,7 +3,7 @@
  * Incluye: caché, retry con exponential backoff, rate limiting, y manejo de errores
  */
 
-import type { Pokemon, PokemonDetail, PokemonStat, PokemonAbility, EvolutionStage } from '../lib/types';
+import type { Pokemon, PokemonDetail, PokemonStat, PokemonAbility, EvolutionStage, VarietyInfo } from '../lib/types';
 import { API_BASE_URL, BATCH_SIZE } from '../lib/constants';
 
 // ============================================================================
@@ -55,6 +55,11 @@ interface PokemonFullResponse {
   };
 }
 
+interface VarietyEntry {
+  is_default: boolean;
+  pokemon: { name: string; url: string };
+}
+
 interface PokemonSpeciesResponse {
   id: number;
   name: string;
@@ -64,6 +69,7 @@ interface PokemonSpeciesResponse {
     language: { name: string };
   }>;
   evolution_chain: { url: string };
+  varieties: VarietyEntry[];
 }
 
 interface GenerationResponse {
@@ -388,6 +394,67 @@ class PokemonAPIClient {
   }
 
   /**
+   * Obtener las variedades (formas) de una especie
+   */
+  async getSpeciesVarieties(speciesId: number): Promise<VarietyInfo[]> {
+    const cacheKey = `species_${speciesId}_varieties`;
+
+    const cached = pokemonCache.get<VarietyInfo[]>(cacheKey);
+    if (cached) return cached;
+
+    const data = await fetchWithRetry<PokemonSpeciesResponse>(
+      `${this.baseUrl}/pokemon-species/${speciesId}`,
+      { retries: 2 }
+    );
+
+    const varieties: VarietyInfo[] = [];
+
+    if (data.varieties) {
+      for (const v of data.varieties) {
+        if (v.is_default) continue;
+
+        const parts = v.pokemon.url.split('/');
+        const id = parseInt(parts[parts.length - 2], 10);
+        if (isNaN(id) || id < 1) continue;
+
+        const formName = this.formatFormName(v.pokemon.name, data.name);
+        if (!formName) continue;
+
+        varieties.push({ id, name: v.pokemon.name, formName });
+      }
+    }
+
+    pokemonCache.set(cacheKey, varieties);
+    return varieties;
+  }
+
+  /**
+   * Obtener todas las variedades (formas) para una lista de species IDs
+   */
+  async getVarietiesForSpeciesList(speciesIds: number[]): Promise<VarietyInfo[]> {
+    const promises = speciesIds.map(id =>
+      this.getSpeciesVarieties(id).catch(() => [] as VarietyInfo[])
+    );
+    const results = await this.fetchWithConcurrency(promises, 10);
+    return results.flat();
+  }
+
+  /**
+   * Obtener datos básicos para variedades (con formName incluido)
+   */
+  async getVarietyPokemonBatch(varieties: VarietyInfo[]): Promise<Pokemon[]> {
+    const ids = varieties.map(v => v.id);
+    const pokemons = await this.getPokemonBatch(ids);
+
+    const varietyMap = new Map(varieties.map(v => [v.id, v.formName]));
+
+    return pokemons.map(p => ({
+      ...p,
+      formName: varietyMap.get(p.id),
+    }));
+  }
+
+  /**
    * Obtener detalles de un Pokémon específico
    */
   async getPokemonDetail(idOrName: number | string): Promise<Pokemon> {
@@ -473,12 +540,28 @@ class PokemonAPIClient {
       return cached;
     }
 
-    const [pokemonData, speciesData] = await Promise.all([
-      fetchWithRetry<PokemonFullResponse>(`${this.baseUrl}/pokemon/${id}`),
-      fetchWithRetry<PokemonSpeciesResponse>(`${this.baseUrl}/pokemon-species/${id}`),
-    ]);
+    const pokemonData = await fetchWithRetry<PokemonFullResponse>(
+      `${this.baseUrl}/pokemon/${id}`
+    );
 
-    const evolutionChain = await this.getEvolutionChain(speciesData.evolution_chain.url);
+    let speciesData: PokemonSpeciesResponse | null = null;
+    try {
+      speciesData = await fetchWithRetry<PokemonSpeciesResponse>(
+        `${this.baseUrl}/pokemon-species/${id}`,
+        { retries: 1 }
+      );
+    } catch {
+      // Form Pokémon (megas, regionales, etc.) no tienen /pokemon-species propio
+    }
+
+    let evolutionChain: EvolutionStage[] = [];
+    if (speciesData?.evolution_chain?.url) {
+      try {
+        evolutionChain = await this.getEvolutionChain(speciesData.evolution_chain.url);
+      } catch {
+        evolutionChain = [];
+      }
+    }
 
     const stats: PokemonStat[] = pokemonData.stats.map((stat) => ({
       name: this.formatStatName(stat.stat.name),
@@ -491,11 +574,13 @@ class PokemonAPIClient {
       isHidden: ability.is_hidden,
     }));
 
-    const description = speciesData.flavor_text_entries.find(
+    const description = speciesData?.flavor_text_entries?.find(
       (entry) => entry.language.name === 'en'
     )?.flavor_text.replace(/\f/g, ' ') || '';
 
-    const generationNumber = parseInt(speciesData.generation.name.replace('generation-', ''), 10);
+    const generationNumber = speciesData?.generation?.name
+      ? parseInt(speciesData.generation.name.replace('generation-', ''), 10)
+      : 0;
 
     const detail: PokemonDetail = {
       id: pokemonData.id,
@@ -508,7 +593,7 @@ class PokemonAPIClient {
       weight: pokemonData.weight / 10,
       description,
       generation: generationNumber,
-      generationName: speciesData.generation.name,
+      generationName: speciesData?.generation?.name || 'unknown',
       evolutionChain,
       cryUrl: pokemonData.cries?.latest,
     };
@@ -610,6 +695,44 @@ class PokemonAPIClient {
       'ice-stone': 'Ice Stone',
     };
     return itemNames[name] || name.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  }
+
+  /**
+   * Extraer el nombre de forma a partir del nombre PokeAPI
+   * 'charizard-mega-x' → 'Mega X', 'raichu-alola' → 'Alolan'
+   */
+  private formatFormName(name: string, baseName: string): string {
+    const withoutBase = name.replace(baseName, '');
+    if (!withoutBase) return 'Default';
+
+    const clean = withoutBase.replace(/^-/, '');
+
+    const knownForms: Record<string, string> = {
+      'mega': 'Mega',
+      'mega-x': 'Mega X',
+      'mega-y': 'Mega Y',
+      'alola': 'Alolan',
+      'galar': 'Galarian',
+      'galarian': 'Galarian',
+      'hisui': 'Hisuian',
+      'hisuian': 'Hisuian',
+      'paldea': 'Paldean',
+      'paldean': 'Paldean',
+      'gmax': 'G-Max',
+      'gigantamax': 'G-Max',
+      'eternamax': 'E-Max',
+      'totem': 'Totem',
+      'bloodmoon': 'Bloodmoon',
+    };
+
+    if (knownForms[clean]) return knownForms[clean];
+
+    const namesToSkip = ['normal', 'standard', 'ordinary', 'land', 'average', 'fifty', 'red-striped', 'blue-striped'];
+    if (namesToSkip.includes(clean)) return '';
+
+    return clean.split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   /**

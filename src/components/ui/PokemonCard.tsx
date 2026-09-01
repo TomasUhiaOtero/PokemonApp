@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { Heart } from 'lucide-react';
-import { TYPE_COLORS } from '../../lib/constants';
+import { Heart, Sparkles } from 'lucide-react';
+import { TYPE_COLORS, FORM_STYLES } from '../../lib/constants';
 import type { Pokemon } from '../../lib/types';
 import { TypeIconSimple } from './TypeIcon';
 
@@ -24,6 +24,10 @@ export const PokemonCard = memo(function PokemonCard({
 }: PokemonCardProps) {
   const primaryType = pokemon.types[0];
   const color = TYPE_COLORS[primaryType] || DEFAULT_TYPE_COLOR;
+
+  const displayName = pokemon.formName
+    ? pokemon.name.replace(/-[a-z0-9]+(-[a-z0-9]+)?$/g, '')
+    : pokemon.name;
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -85,9 +89,22 @@ export const PokemonCard = memo(function PokemonCard({
             className="w-24 h-24 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300"
             loading="lazy"
           />
+          {pokemon.formName && (
+            <div
+              className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border flex items-center gap-1 shadow-lg"
+              style={{
+                background: FORM_STYLES[pokemon.formName.toLowerCase().replace(/\s+/g, '-')]?.bg || FORM_STYLES.default.bg,
+                color: FORM_STYLES[pokemon.formName.toLowerCase().replace(/\s+/g, '-')]?.color || FORM_STYLES.default.color,
+                borderColor: FORM_STYLES[pokemon.formName.toLowerCase().replace(/\s+/g, '-')]?.color || FORM_STYLES.default.color,
+              }}
+            >
+              <Sparkles size={10} />
+              {pokemon.formName}
+            </div>
+          )}
         </div>
         <h3 className="text-lg font-semibold text-white text-center capitalize">
-          {pokemon.name}
+          {displayName}
         </h3>
         
         <div className="flex justify-center gap-2 mt-3 flex-wrap">

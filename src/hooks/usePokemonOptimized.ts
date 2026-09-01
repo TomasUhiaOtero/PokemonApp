@@ -12,6 +12,7 @@ interface UsePokemonOptimizedReturn {
   isLoading: boolean;
   isSwitchingGeneration: boolean;
   isLoadingMore: boolean;
+  isLoadingForms: boolean;
   error: string | null;
   hasMore: boolean;
   totalLoaded: number;
@@ -36,6 +37,7 @@ export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): U
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitchingGeneration, setIsSwitchingGeneration] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isLoadingForms, setIsLoadingForms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalLoaded, setTotalLoaded] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -45,6 +47,7 @@ export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): U
   const speciesIdsRef = useRef<number[]>([]);
   const loadedIdsRef = useRef<Set<number>>(new Set());
   const isInitialLoadRef = useRef(true);
+  const abortRef = useRef<AbortController | null>(null);
 
   const cacheAge = useMemo(() =>
     pokemonCache.getCacheAge(`generation_${generation}_species`),
@@ -62,17 +65,24 @@ export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): U
     setIsSwitchingGeneration(true);
     speciesIdsRef.current = [];
     loadedIdsRef.current.clear();
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
     setTotalLoaded(0);
     setHasMore(true);
     setError(null);
   }, [generation]);
 
-  // Cargar los Pokémon de la generación seleccionada
+  // Cargar los Pokémon de la generación seleccionada (base + formas)
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     const loadGeneration = async () => {
       setIsLoading(true);
+      setIsLoadingForms(true);
 
       try {
         const ids = await pokemonApi.getGenerationSpecies(generation);
@@ -80,7 +90,6 @@ export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): U
         if (cancelled) return;
 
         speciesIdsRef.current = ids;
-        setTotalCount(ids.length);
 
         const cachedPokemons: Pokemon[] = [];
         for (const id of ids) {
@@ -95,22 +104,63 @@ export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): U
 
         const missingIds = ids.filter((id) => !loadedIdsRef.current.has(id));
 
+        let basePokemons: Pokemon[] = [];
         if (missingIds.length > 0) {
           const freshPokemons = await pokemonApi.getPokemonBatch(missingIds);
           if (cancelled) return;
-
-          const allPokemons = deduplicateById([...cachedPokemons, ...freshPokemons])
-            .sort((a, b) => a.id - b.id);
-
-          setPokemons(allPokemons);
-          setTotalLoaded(allPokemons.length);
-          setHasMore(false);
+          basePokemons = deduplicateById([...cachedPokemons, ...freshPokemons]);
         } else {
-          const sorted = deduplicateById(cachedPokemons).sort((a, b) => a.id - b.id);
-          setPokemons(sorted);
-          setTotalLoaded(sorted.length);
-          setHasMore(false);
+          basePokemons = deduplicateById(cachedPokemons);
         }
+
+        basePokemons.sort((a, b) => a.id - b.id);
+
+        if (cancelled) return;
+
+        // Cargar variedades (formas) en paralelo
+        const [varieties] = await Promise.all([
+          pokemonApi.getVarietiesForSpeciesList(ids),
+        ]);
+
+        if (cancelled) return;
+
+        let varietyPokemons: Pokemon[] = [];
+        if (varieties.length > 0) {
+          // Primero ver cuáles ya están en caché
+          const cachedVarieties: Pokemon[] = [];
+          const uncachedVarieties: typeof varieties = [];
+
+          for (const v of varieties) {
+            const cached = pokemonCache.get<Pokemon>(`pokemon_${v.id}`);
+            if (cached) {
+              cachedVarieties.push({ ...cached, formName: v.formName });
+            } else {
+              uncachedVarieties.push(v);
+            }
+          }
+
+          if (uncachedVarieties.length > 0) {
+            try {
+              const freshVarieties = await pokemonApi.getVarietyPokemonBatch(uncachedVarieties);
+              if (cancelled) return;
+              varietyPokemons = [...cachedVarieties, ...freshVarieties].sort((a, b) => a.id - b.id);
+            } catch {
+              varietyPokemons = cachedVarieties;
+            }
+          } else {
+            varietyPokemons = cachedVarieties.sort((a, b) => a.id - b.id);
+          }
+        }
+
+        if (cancelled) return;
+
+        const allPokemons = [...basePokemons, ...varietyPokemons]
+          .sort((a, b) => a.id - b.id);
+
+        setPokemons(allPokemons);
+        setTotalCount(ids.length + varieties.length);
+        setTotalLoaded(allPokemons.length);
+        setHasMore(false);
 
         isInitialLoadRef.current = false;
       } catch (err) {
@@ -120,6 +170,7 @@ export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): U
       } finally {
         if (!cancelled) {
           setIsLoading(false);
+          setIsLoadingForms(false);
           setIsSwitchingGeneration(false);
         }
       }
@@ -129,6 +180,7 @@ export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): U
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [generation]);
 
@@ -170,6 +222,10 @@ export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): U
     pokemonCache.invalidate();
     speciesIdsRef.current = [];
     loadedIdsRef.current.clear();
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
     setPokemons([]);
     setTotalLoaded(0);
     setHasMore(true);
@@ -182,6 +238,7 @@ export function usePokemonOptimized({ generation }: UsePokemonOptimizedProps): U
     isLoading,
     isSwitchingGeneration,
     isLoadingMore,
+    isLoadingForms,
     error,
     hasMore,
     totalLoaded,

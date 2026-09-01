@@ -223,11 +223,9 @@ export function PokemonGrid({
   };
 
   const handleSelectPokemon = async (pokemon: Pokemon) => {
-    // Guardar la posición de scroll antes de abrir el modal
     scrollPositionRef.current = window.scrollY;
-    // Bloquear scroll mientras el modal está abierto
     document.body.style.overflow = 'hidden';
-    await fetchPokemonDetail(pokemon.id);
+    await fetchPokemonDetail(pokemon.id, pokemon.formName);
   };
 
   const handleCloseDetail = useCallback(() => {

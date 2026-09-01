@@ -1,7 +1,7 @@
 import React, { memo, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, ChevronRight, Volume2, VolumeX } from 'lucide-react';
-import { TYPE_COLORS } from '../../lib/constants';
+import { X, ChevronRight, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { TYPE_COLORS, FORM_STYLES } from '../../lib/constants';
 import type { PokemonDetail } from '../../lib/types';
 import './PokemonDetail.css';
 
@@ -146,7 +146,20 @@ export const PokemonDetailView = memo(function PokemonDetailView({
               <span className="pokemon-detail-number">
                 #{String(pokemon.number).padStart(3, '0')}
               </span>
-              <h2 className="pokemon-detail-name">{pokemon.name}</h2>
+              <h2 className="pokemon-detail-name capitalize">{pokemon.name.replace(/-/g, ' ')}</h2>
+              {pokemon.formName && (
+                <div
+                  className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tight border inline-flex items-center gap-1.5 mx-auto mb-2"
+                  style={{
+                    background: FORM_STYLES[pokemon.formName.toLowerCase().replace(/\s+/g, '-')]?.bg || FORM_STYLES.default.bg,
+                    color: FORM_STYLES[pokemon.formName.toLowerCase().replace(/\s+/g, '-')]?.color || FORM_STYLES.default.color,
+                    borderColor: FORM_STYLES[pokemon.formName.toLowerCase().replace(/\s+/g, '-')]?.color || FORM_STYLES.default.color,
+                  }}
+                >
+                  <Sparkles size={12} />
+                  {pokemon.formName}
+                </div>
+              )}
 
               <div className="pokemon-detail-types">
                 {pokemon.types.map((type) => {

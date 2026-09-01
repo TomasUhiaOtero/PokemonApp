@@ -9,6 +9,13 @@ export interface Pokemon {
   name: string;
   types: string[];
   number: number;
+  formName?: string;
+}
+
+export interface VarietyInfo {
+  id: number;
+  name: string;
+  formName: string;
 }
 
 export interface PokemonBasic {
@@ -71,4 +78,5 @@ export interface PokemonDetail {
   generationName: string;
   evolutionChain: EvolutionStage[];
   cryUrl?: string;
+  formName?: string;
 }
