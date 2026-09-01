@@ -6,7 +6,9 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'test-results', 'node_modules']),
+  // `public` son assets servidos tal cual: no hay nada que lintar y recorrerlo
+  // solo cuesta tiempo (la secuencia de frames del Hero son 144 archivos).
+  globalIgnores(['dist', 'test-results', 'node_modules', 'public']),
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     extends: [
