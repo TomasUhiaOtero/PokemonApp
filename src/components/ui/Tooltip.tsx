@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 // ------------------------------------------
 // Tooltip Component (Animate UI Style)
@@ -20,7 +20,7 @@ export function Tooltip({
   delay = 0,
 }: TooltipProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = { current: null as ReturnType<typeof setTimeout> | null };
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
     if (delay > 0) {

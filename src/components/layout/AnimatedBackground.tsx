@@ -54,7 +54,11 @@ const LINE_CONFIG = Array.from({ length: ENERGY_LINES }, (_, i) => ({
   delay: -(i * 6),
 }));
 
-function FloatingParticle({ size, left, top, rangeX, rangeY, duration, delay, opacityPeak }) {
+type ParticleProps = (typeof PARTICLE_CONFIG)[number];
+type BubbleProps = (typeof BUBBLE_CONFIG)[number];
+type LineProps = (typeof LINE_CONFIG)[number];
+
+function FloatingParticle({ size, left, top, rangeX, rangeY, duration, delay, opacityPeak }: ParticleProps) {
   return (
     <motion.div
       className="absolute pointer-events-none"
@@ -84,7 +88,7 @@ function FloatingParticle({ size, left, top, rangeX, rangeY, duration, delay, op
   );
 }
 
-function EnergyLine({ top, duration, delay }) {
+function EnergyLine({ top, duration, delay }: LineProps) {
   return (
     <motion.div
       className="absolute left-0 right-0 h-px pointer-events-none"
@@ -108,7 +112,7 @@ function EnergyLine({ top, duration, delay }) {
   );
 }
 
-function LightBubble({ size, left, duration, delay }) {
+function LightBubble({ size, left, duration, delay }: BubbleProps) {
   const [maxHeight, setMaxHeight] = useState(500);
   
   useEffect(() => {
