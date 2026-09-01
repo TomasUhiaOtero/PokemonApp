@@ -72,7 +72,8 @@ function PokedexNavigation({
             disabled={currentPage === 1}
             className="w-10 h-10 rounded-lg glass hover:bg-white/10 
                        disabled:opacity-30 disabled:cursor-not-allowed
-                       flex items-center justify-center transition-all
+                       flex items-center justify-center
+                       transition-[background-color,border-color,opacity] duration-200 ease-out
                        border border-white/10 hover:border-white/20"
             aria-label="Previous page"
           >
@@ -111,7 +112,8 @@ function PokedexNavigation({
             disabled={currentPage === totalPages}
             className="w-10 h-10 rounded-lg glass hover:bg-white/10 
                        disabled:opacity-30 disabled:cursor-not-allowed
-                       flex items-center justify-center transition-all
+                       flex items-center justify-center
+                       transition-[background-color,border-color,opacity] duration-200 ease-out
                        border border-white/10 hover:border-white/20"
             aria-label="Next page"
           >
@@ -133,7 +135,7 @@ function PokedexNavigation({
               aria-selected={currentPage === i + 1}
               aria-label={`Page ${i + 1}`}
               onClick={() => onPageChange(i + 1)}
-              className={`w-3 h-3 rounded-full transition-all cursor-pointer
+              className={`w-3 h-3 rounded-full transition-[width,background-color] duration-200 ease-out cursor-pointer
                          ${
                            currentPage === i + 1
                              ? 'bg-pokemon-red w-5'
@@ -206,6 +208,12 @@ export function PokemonGrid({
   // Navegación con teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // No robar las flechas mientras se escribe en un campo
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
       if (e.key === 'ArrowRight' && currentPage < totalPages) {
         setCurrentPage((p) => p + 1);
       } else if (e.key === 'ArrowLeft' && currentPage > 1) {
@@ -313,27 +321,18 @@ export function PokemonGrid({
         {/* Contenedor de tarjetas con transición suave */}
         <div className="relative min-h-[500px]" ref={gridRef}>
           {/* Tarjetas de Pokémon - Grid de 5 columnas para 2 filas */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPage}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-            >
-              {pagePokemons.map((pokemon, index) => (
-                <PokemonCard
-                  key={pokemon.id}
-                  pokemon={pokemon}
-                  index={index}
-                  isFavorite={isFavorite ? isFavorite(pokemon.id) : false}
-                  onToggleFavorite={onToggleFavorite}
-                  onSelect={handleSelectPokemon}
-                />
-              ))}
-            </motion.div>
-          </AnimatePresence>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {pagePokemons.map((pokemon, index) => (
+              <PokemonCard
+                key={pokemon.id}
+                pokemon={pokemon}
+                index={index}
+                isFavorite={isFavorite ? isFavorite(pokemon.id) : false}
+                onToggleFavorite={onToggleFavorite}
+                onSelect={handleSelectPokemon}
+              />
+            ))}
+          </div>
 
           {/* Loading indicator */}
           {isLoadingMore && (

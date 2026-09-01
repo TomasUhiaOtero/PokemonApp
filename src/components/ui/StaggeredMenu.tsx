@@ -202,7 +202,7 @@ export function StaggeredMenu({
       <button
         ref={menuBtnRef}
         onClick={toggleMenu}
-        className="fixed z-[60] right-6 top-8 p-2 rounded-full backdrop-blur-md border border-white/20 shadow-lg transition-all duration-300 hover:scale-110 cursor-pointer"
+        className="fixed z-[60] right-6 top-8 p-2 rounded-full backdrop-blur-md border border-white/20 shadow-lg transition-transform duration-300 ease-out hover:scale-110 cursor-pointer"
         style={{
           background: 'rgba(0,0,0,0.4)',
         }}
@@ -214,7 +214,7 @@ export function StaggeredMenu({
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/5/51/Pokebola-pokeball-png-0.png"
             alt="Menu"
-            className={`w-full h-full object-contain transition-all duration-300 ${
+            className={`w-full h-full object-contain transition-[opacity,transform] duration-300 ease-out ${
               isOpen ? 'opacity-0 scale-0 rotate-180' : 'opacity-100 scale-100 rotate-0'
             }`}
           />
@@ -222,7 +222,7 @@ export function StaggeredMenu({
           <img
             src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png"
             alt="Menu"
-            className={`absolute inset-0 w-full h-full object-contain transition-all duration-300 ${
+            className={`absolute inset-0 w-full h-full object-contain transition-[opacity,transform] duration-300 ease-out ${
               isOpen ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-0 -rotate-180'
             }`}
           />
@@ -287,7 +287,7 @@ export function StaggeredMenu({
                   <span className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                     {item.label}
                   </span>
-                  <span className="text-2xl opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                  <span className="text-2xl opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform] duration-300 ease-out">
                     →
                   </span>
                 </button>

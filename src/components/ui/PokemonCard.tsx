@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Heart, Sparkles } from 'lucide-react';
 import { TYPE_COLORS, FORM_STYLES } from '../../lib/constants';
 import type { Pokemon } from '../../lib/types';
@@ -22,6 +22,7 @@ export const PokemonCard = memo(function PokemonCard({
   onToggleFavorite,
   onSelect
 }: PokemonCardProps) {
+  const reduce = useReducedMotion() ?? false;
   const primaryType = pokemon.types[0];
   const color = TYPE_COLORS[primaryType] || DEFAULT_TYPE_COLOR;
 
@@ -44,11 +45,11 @@ export const PokemonCard = memo(function PokemonCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: reduce ? 0 : 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      transition={{ duration: reduce ? 0.15 : 0.3, ease: 'easeOut' }}
       viewport={{ once: true }}
-      whileHover={{ y: -8, scale: 1.02 }}
+      whileHover={reduce ? undefined : { y: -8, scale: 1.02 }}
       className="glass rounded-3xl p-6 cursor-pointer group relative overflow-hidden"
       style={{ background: `linear-gradient(135deg, ${color}15, ${color}05)` }}
       onClick={handleCardClick}

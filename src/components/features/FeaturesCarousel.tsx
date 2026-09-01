@@ -28,7 +28,7 @@ const FEATURES: Feature[] = [
 
 function FeatureCard({ image, title, description, isActive }: Feature & { isActive: boolean }) {
   return (
-    <div className={`flex-shrink-0 w-[85vw] max-w-[450px] glass rounded-3xl p-8 md:p-10 text-center transition-all duration-500 mx-4 ${
+    <div className={`flex-shrink-0 w-[85vw] max-w-[450px] glass rounded-3xl p-8 md:p-10 text-center transition-[opacity,transform] duration-500 ease-out mx-4 ${
       isActive ? 'opacity-100 scale-100' : 'opacity-30 scale-90 pointer-events-none'
     }`}>
       <div className="w-32 h-32 md:w-40 md:h-40 mx-auto mb-5 md:mb-6">
@@ -173,7 +173,7 @@ export function FeaturesCarousel() {
               <button
                 key={index}
                 onClick={() => scrollTo(index)}
-                className={`h-3 rounded-full transition-all duration-300 cursor-pointer ${
+                className={`h-3 rounded-full transition-[width,background-color] duration-300 ease-out cursor-pointer ${
                   index === selectedIndex 
                     ? 'bg-pokemon-red w-8' 
                     : 'bg-white/30 hover:bg-white/50 w-3'

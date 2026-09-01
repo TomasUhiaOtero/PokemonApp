@@ -38,7 +38,7 @@ export function Header() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="px-6 py-2.5 bg-gradient-to-r from-pokemon-red to-pokemon-red/80 text-white rounded-full font-medium text-sm hover:shadow-lg hover:shadow-pokemon-red/30 transition-all"
+          className="px-6 py-2.5 bg-gradient-to-r from-pokemon-red to-pokemon-red/80 text-white rounded-full font-medium text-sm hover:shadow-lg hover:shadow-pokemon-red/30 transition-shadow duration-200 ease-out"
         >
           Get Started
         </motion.button>

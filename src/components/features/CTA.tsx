@@ -72,7 +72,7 @@ export function CTA() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
                 viewport={{ once: true }}
-                className="glass rounded-2xl px-5 py-3 flex items-center gap-3 hover:bg-white/10 transition-all cursor-default"
+                className="glass rounded-2xl px-5 py-3 flex items-center gap-3 hover:bg-white/10 transition-colors duration-200 ease-out cursor-default"
               >
                 <span className="text-2xl">{tech.icon}</span>
                 <span className="text-white font-medium">{tech.name}</span>

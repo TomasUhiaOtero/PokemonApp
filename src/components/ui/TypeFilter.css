@@ -1,6 +1,7 @@
 .type-filter-btn {
   border: 2px solid transparent;
-  transition: all 0.2s ease;
+  transition: background-color 200ms var(--ease-out), border-color 200ms var(--ease-out),
+    box-shadow 200ms var(--ease-out);
 }
 
 .type-filter-btn:hover {

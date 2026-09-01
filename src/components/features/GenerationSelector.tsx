@@ -25,7 +25,7 @@ export const GenerationSelector = memo(function GenerationSelector({
             onClick={() => onGenerationChange(gen.id)}
             className={`
               relative px-3 py-2 rounded-xl text-sm font-medium
-              transition-all duration-300 border cursor-pointer
+              transition-[background-color,border-color,color,box-shadow] duration-300 ease-out border cursor-pointer
               ${
                 generation === gen.id
                   ? 'bg-pokemon-red/20 border-pokemon-red/50 text-pokemon-red shadow-lg shadow-pokemon-red/10'

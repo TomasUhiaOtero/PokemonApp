@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
 const FLOATING_PARTICLES = 20;
@@ -53,6 +53,16 @@ const LINE_CONFIG = Array.from({ length: ENERGY_LINES }, (_, i) => ({
   duration: 18 + i * 4,
   delay: -(i * 6),
 }));
+
+// Los tres estados del gradiente de fondo. Se cruzan por opacidad (componible)
+// en vez de animar `background`, que obliga a repintar el viewport entero.
+const GRADIENT_LAYERS = [
+  'radial-gradient(ellipse at 20% 20%, rgba(239, 68, 68, 0.1) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)',
+  'radial-gradient(ellipse at 80% 20%, rgba(234, 179, 8, 0.07) 0%, transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(239, 68, 68, 0.08) 0%, transparent 50%)',
+  'radial-gradient(ellipse at 50% 50%, rgba(59, 130, 246, 0.07) 0%, transparent 50%), radial-gradient(ellipse at 20% 20%, rgba(234, 179, 8, 0.08) 0%, transparent 50%)',
+];
+
+const GRADIENT_CYCLE = 25;
 
 type ParticleProps = (typeof PARTICLE_CONFIG)[number];
 type BubbleProps = (typeof BUBBLE_CONFIG)[number];
@@ -145,22 +155,23 @@ function LightBubble({ size, left, duration, delay }: BubbleProps) {
 
 function AnimatedGradient() {
   return (
-    <motion.div
-      className="absolute inset-0 pointer-events-none"
-      animate={{
-        background: [
-          'radial-gradient(ellipse at 20% 20%, rgba(239, 68, 68, 0.1) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)',
-          'radial-gradient(ellipse at 80% 20%, rgba(234, 179, 8, 0.07) 0%, transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(239, 68, 68, 0.08) 0%, transparent 50%)',
-          'radial-gradient(ellipse at 50% 50%, rgba(59, 130, 246, 0.07) 0%, transparent 50%), radial-gradient(ellipse at 20% 20%, rgba(234, 179, 8, 0.08) 0%, transparent 50%)',
-          'radial-gradient(ellipse at 20% 20%, rgba(239, 68, 68, 0.1) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)',
-        ],
-      }}
-      transition={{
-        duration: 25,
-        repeat: Infinity,
-        ease: "linear",
-      }}
-    />
+    <>
+      {GRADIENT_LAYERS.map((background, i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-0 pointer-events-none"
+          style={{ background, willChange: 'opacity' }}
+          animate={{ opacity: [1, 0, 0, 1] }}
+          transition={{
+            duration: GRADIENT_CYCLE,
+            times: [0, 0.33, 0.66, 1],
+            delay: -(i * (GRADIENT_CYCLE / 3)),
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        />
+      ))}
+    </>
   );
 }
 
@@ -179,7 +190,7 @@ function GridPattern() {
   );
 }
 
-function GlowOrbs() {
+function GlowOrbs({ reduce }: { reduce: boolean }) {
   return (
     <>
       <motion.div
@@ -187,7 +198,7 @@ function GlowOrbs() {
         style={{
           background: 'radial-gradient(circle, rgba(239, 68, 68, 0.08) 0%, transparent 70%)',
         }}
-        animate={{
+        animate={reduce ? undefined : {
           scale: [1, 1.2, 1],
           opacity: [0.6, 1, 0.6],
         }}
@@ -202,7 +213,7 @@ function GlowOrbs() {
         style={{
           background: 'radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%)',
         }}
-        animate={{
+        animate={reduce ? undefined : {
           scale: [1, 1.15, 1],
           opacity: [0.6, 1, 0.6],
         }}
@@ -218,6 +229,8 @@ function GlowOrbs() {
 }
 
 export function AnimatedBackground() {
+  const reduce = useReducedMotion() ?? false;
+
   return (
     <div 
       className="fixed inset-0 overflow-hidden pointer-events-none"
@@ -227,14 +240,14 @@ export function AnimatedBackground() {
       <div className="absolute inset-0 bg-pokemon-dark" />
       <AnimatedGradient />
       <GridPattern />
-      <GlowOrbs />
-      {BUBBLE_CONFIG.map((config) => (
+      <GlowOrbs reduce={reduce} />
+      {!reduce && BUBBLE_CONFIG.map((config) => (
         <LightBubble key={`bubble-${config.id}`} {...config} />
       ))}
-      {LINE_CONFIG.map((config) => (
+      {!reduce && LINE_CONFIG.map((config) => (
         <EnergyLine key={`line-${config.id}`} {...config} />
       ))}
-      {PARTICLE_CONFIG.map((config) => (
+      {!reduce && PARTICLE_CONFIG.map((config) => (
         <FloatingParticle key={`particle-${config.id}`} {...config} />
       ))}
       <motion.div
@@ -242,7 +255,7 @@ export function AnimatedBackground() {
         style={{
           background: 'radial-gradient(circle, rgba(234, 179, 8, 0.04) 0%, transparent 60%)',
         }}
-        animate={{
+        animate={reduce ? undefined : {
           scale: [1, 1.1, 1],
           opacity: [0.4, 0.7, 0.4],
         }}
